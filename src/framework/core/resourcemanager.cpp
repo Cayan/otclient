@@ -119,6 +119,7 @@ bool ResourceManager::saveFile(const std::string& fileName, const uchar* data, u
     if(!file)
     {
         logError(PHYSFS_getLastError());
+        logError(fileName);
         return false;
     }
 

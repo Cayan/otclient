@@ -27,30 +27,26 @@
 #include <framework/graphics/texture.h>
 #include <png.h>
 
-#define SPRITE_WIDTH 32
-#define SPRITE_HEIGHT 32
-#define SPRITE_CHANNELS 4
-#define SPRITE_SIZE SPRITE_WIDTH*SPRITE_HEIGHT*SPRITE_CHANNELS
-
-/*
-    Compression levels:
-        None = 0
-        Fastest = 1
-        Best = 9
-*/
-
-#define PNG_COMPRESSION 0
-
 class SpriteManager
 {
     enum {
-        SPRITE_WIDTH=32,
-        SPRITE_HEIGHT=32,
-        SPRITE_CHANNELS=4,
-        SPRITE_SIZE=SPRITE_WIDTH*SPRITE_HEIGHT*SPRITE_CHANNELS
+        SPRITE_WIDTH = 32,
+        SPRITE_HEIGHT = 32,
+        SPRITE_CHANNELS = 4,
+        SPRITE_SIZE = SPRITE_WIDTH*SPRITE_HEIGHT*SPRITE_CHANNELS
     };
 
 public:
+    enum {
+        /*
+            Compression levels:
+                None = 0
+                Fastest = 1
+                Best = 9
+        */
+        PNG_COMPRESSION = 0
+    };
+
     SpriteManager();
 
     bool load(const std::string& file);
@@ -60,8 +56,8 @@ public:
     uint32 getSignature() { return m_signature; }
     int getSpritesCount() { return m_spritesCount; }
 
-    bool exportSprite(std::string fileName, int id);
-    bool exportSprites();
+    bool exportSprite(std::string fileName, int id, int compression_level = 6);
+    void exportSprites();
 
     TexturePtr& getSpriteTexture(int id);
     bool isLoaded() { return m_loaded; }

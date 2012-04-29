@@ -917,7 +917,7 @@ void write_IDATs(std::ostream& f, unsigned char* data, unsigned int length, unsi
     }
 }
 
-void save_png(std::stringstream& f, int width, int height, int channels, unsigned char *pixels)
+void save_png(std::stringstream& f, int width, int height, int channels, unsigned char *pixels, int compression_level/* = 6*/)
 {
     unsigned int bpp = 4;
     unsigned char coltype = 0;
@@ -968,13 +968,13 @@ void save_png(std::stringstream& f, int width, int height, int channels, unsigne
     zstream1.zalloc    = Z_NULL;
     zstream1.zfree     = Z_NULL;
     zstream1.opaque    = Z_NULL;
-    deflateInit2(&zstream1, Z_BEST_COMPRESSION, 8, 15, 8, Z_DEFAULT_STRATEGY);
+    deflateInit2(&zstream1, compression_level, 8, 15, 8, Z_DEFAULT_STRATEGY);
 
     zstream2.data_type = Z_BINARY;
     zstream2.zalloc    = Z_NULL;
     zstream2.zfree     = Z_NULL;
     zstream2.opaque    = Z_NULL;
-    deflateInit2(&zstream2, Z_BEST_COMPRESSION, 8, 15, 8, Z_FILTERED);
+    deflateInit2(&zstream2, compression_level, 8, 15, 8, Z_FILTERED);
 
     int a, b, c, pa, pb, pc, p, v;
     unsigned char* prev;

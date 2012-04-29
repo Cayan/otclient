@@ -24,6 +24,7 @@
 #include "spritemanager.h"
 #include "thing.h"
 #include <framework/core/resourcemanager.h>
+#include <physfs.h>
 
 ThingsType g_thingsType;
 ThingType ThingsType::m_emptyThingType;
@@ -126,4 +127,78 @@ ThingType *ThingsType::getThingType(uint16 id, Categories category)
     if(id >= m_things[category].size())
         return &m_emptyThingType;
     return &m_things[category][id];
+}
+
+void ThingsType::exportThings()
+{
+    for(int i = Item; i < LastCategory; i++) {
+        for(uint32 id = 0; id < m_things[i].size(); id++) {
+            OTMLDocumentPtr doc = OTMLDocument::create();
+
+            doc->writeAt("ID", id);
+
+            if(m_things[i][id].properties[ThingType::IsGround])
+                 doc->writeAt("GroundSpeed", m_things[i][id].parameters[ThingType::GroundSpeed]);
+
+            if(m_things[i][id].properties[ThingType::IsWritable] || m_things[i][id].properties[ThingType::IsWritableOnce]){
+                if(m_things[i][id].properties[ThingType::IsWritableOnce])
+                    doc->writeAt("WritableOnce", true);
+
+                doc->writeAt("MaxTextLenght", m_things[i][id].parameters[ThingType::MaxTextLenght]);
+            }
+
+            if(m_things[i][id].properties[ThingType::HasLight]) {
+                doc->writeAt("LightLevel", m_things[i][id].parameters[ThingType::LightLevel]);
+                doc->writeAt("LightColor", m_things[i][id].parameters[ThingType::LightColor]);
+            }
+
+            if(m_things[i][id].properties[ThingType::HasDisplacement]) {
+                doc->writeAt("DisplacementX", m_things[i][id].parameters[ThingType::DisplacementX]);
+                doc->writeAt("DisplacementY", m_things[i][id].parameters[ThingType::DisplacementY]);
+            }
+
+            if(m_things[i][id].properties[ThingType::HasElevation])
+                doc->writeAt("Elevation", m_things[i][id].parameters[ThingType::Elevation]);
+
+            if(m_things[i][id].properties[ThingType::MiniMap])
+                doc->writeAt("MiniMapColor", m_things[i][id].parameters[ThingType::MiniMapColor]);
+
+            if(m_things[i][id].properties[ThingType::LensHelp])
+                doc->writeAt("LensHelp", m_things[i][id].parameters[ThingType::LensHelp]);
+
+            if(m_things[i][id].properties[ThingType::Cloth])
+                doc->writeAt("ClothSlot", m_things[i][id].parameters[ThingType::ClothSlot]);
+
+            OTMLNodePtr sprites = OTMLNode::create("Sprites", true);
+            std::string folderName;
+
+            if(i == Item)
+                folderName = Fw::formatString("data/items/%d", id);
+            else if(i == Creature)
+                 folderName = Fw::formatString("data/creatures/%d", id);
+            else if(i == Effect)
+                folderName = Fw::formatString("data/effects/%d", id);
+            else if(i == Missile)
+                 folderName = Fw::formatString("data/missiles/%d", id);
+            else
+                logError("[ThingsType::exportThings] Unexpected error.");
+
+            g_resources.makeDir(folderName);
+            for(uint32 count = 0; count < m_things[i][id].sprites.size(); count++)
+            {
+                std::string fileName = Fw::formatString("%s/%d.png", folderName.c_str(), m_things[i][id].sprites[count]);
+                if(m_things[i][id].sprites[count] > 0) { // WTF?
+                    if(!g_sprites.exportSprite(fileName, m_things[i][id].sprites[count], SpriteManager::PNG_COMPRESSION))
+                        logError("id", id, "sprite", m_things[i][id].sprites[count]);
+
+                    std::string key = Fw::formatString("Sprite%d", count);
+                    sprites->writeAt(key, m_things[i][id].sprites[count]);
+                }
+            }
+
+            doc->addChild(sprites);
+            std::string fileName = Fw::formatString("%s/%d.otml", folderName.c_str(), id);
+            doc->save(fileName);
+        }
+    }
 }

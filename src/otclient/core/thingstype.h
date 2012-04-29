@@ -23,6 +23,7 @@
 #ifndef DATMANAGER_H
 #define DATMANAGER_H
 
+#include <framework/otml/otml.h>
 #include <framework/global.h>
 #include "thingtype.h"
 
@@ -48,6 +49,8 @@ public:
 
     uint32 getSignature() { return m_signature; }
     bool isLoaded() { return m_loaded; }
+
+    void exportThings();
 
     uint16 getFirstItemId() { return 100; }
     uint16 getMaxItemid() { return m_things[Item].size() + 99; }
