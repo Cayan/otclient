@@ -39,10 +39,17 @@
         Best = 9
 */
 
-#define PNG_COMPRESSION 6
+#define PNG_COMPRESSION 0
 
 class SpriteManager
 {
+    enum {
+        SPRITE_WIDTH=32,
+        SPRITE_HEIGHT=32,
+        SPRITE_CHANNELS=4,
+        SPRITE_SIZE=SPRITE_WIDTH*SPRITE_HEIGHT*SPRITE_CHANNELS
+    };
+
 public:
     SpriteManager();
 
@@ -53,6 +60,7 @@ public:
     uint32 getSignature() { return m_signature; }
     int getSpritesCount() { return m_spritesCount; }
 
+    bool exportSprite(std::string fileName, int id);
     bool exportSprites();
 
     TexturePtr& getSpriteTexture(int id);

@@ -25,7 +25,7 @@
 #include <framework/core/eventdispatcher.h>
 #include <framework/core/filestream.h>
 #include <framework/graphics/graphics.h>
-#include <physfs.h>
+#include <framework/thirdparty/apngloader.h>
 
 SpriteManager g_sprites;
 
@@ -276,6 +276,84 @@ bool SpriteManager::exportSprites()
         png_destroy_write_struct(&pPng, &pPngInfo);
 
         fclose(pFile);
+    }
+
+    return true;
+}
+
+bool SpriteManager::exportSprite(std::string fileName, int id)
+{
+    m_spritesFile->seek(((i-1) * 4) + 6);
+    uint32 spriteAddress = m_spritesFile->getU32();
+    if(spriteAddress == 0)
+        return false;
+
+    m_spritesFile->seek(spriteAddress);
+
+    // skip color key
+    m_spritesFile->getU8();
+    m_spritesFile->getU8();
+    m_spritesFile->getU8();
+
+    uint16 pixelDataSize = m_spritesFile->getU16();
+
+    uchar pixels[SPRITE_SIZE];
+    int writePos = 0;
+    int read = 0;
+
+    // decompress pixels
+    while(read < pixelDataSize) {
+        uint16 transparentPixels = m_spritesFile->getU16();
+        uint16 coloredPixels = m_spritesFile->getU16();
+
+        if(writePos + transparentPixels*4 + coloredPixels*3 >= SPRITE_SIZE)
+            return false;
+
+        for(int i = 0; i < transparentPixels; i++) {
+            pixels[writePos + 0] = 0x00;
+            pixels[writePos + 1] = 0x00;
+            pixels[writePos + 2] = 0x00;
+            pixels[writePos + 3] = 0x00;
+            writePos += 4;
+        }
+
+        for(int i = 0; i < coloredPixels; i++) {
+            pixels[writePos + 0] = m_spritesFile->getU8();
+            pixels[writePos + 1] = m_spritesFile->getU8();
+            pixels[writePos + 2] = m_spritesFile->getU8();
+            pixels[writePos + 3] = 0xFF;
+
+            writePos += 4;
+        }
+
+        read += 4 + (3 * coloredPixels);
+    }
+
+    // fill remaining pixels with alpha
+    while(writePos < SPRITE_SIZE) {
+        pixels[writePos + 0] = 0x00;
+        pixels[writePos + 1] = 0x00;
+        pixels[writePos + 2] = 0x00;
+        pixels[writePos + 3] = 0x00;
+        writePos += 4;
+    }
+
+    ss.str("");
+    save_png(ss, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_CHANNELS, pixels, PNG_COMPRESSION);
+    g_resources.saveFile(fileName, ss);
+    return true;
+
+}
+
+bool SpriteManager::exportSprites()
+{
+    std::stringstream ss;
+    g_resources.makeDir("sprites");
+
+    for(volatile int i = 1; i <= m_spritesCount; i++) {
+        std::string fileName = Fw::formatString("sprites/%d.png", i);
+        if(!exportSprite(fileName, i))
+            return false;
     }
 
     return true;
