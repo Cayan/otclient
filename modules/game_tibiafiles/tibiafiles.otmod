@@ -4,9 +4,17 @@ Module
   reloadable: false
 
   @onLoad: |
-    if not g_thingsType.load('/game_tibiafiles/Tibia.dat') then
-      fatal(tr("Unable to load dat file, please place a valid Tibia dat in modules/game_tibiafiles/Tibia.dat"))
-    end
-    if not g_sprites.load('/game_tibiafiles/Tibia.spr') then
-      fatal(tr("Unable to load spr file, please place a valid Tibia spr in modules/game_tibiafiles/Tibia.spr"))
+    local sprPath = '/game_tibiafiles/Tibia.spr'
+    local datPath = '/game_tibiafiles/Tibia.dat'
+    if g_resources.fileExists(datPath) and g_resources.fileExists(sprPath) then
+      if not g_thingsType.load(datPath) then
+        fatal(tr("Unable to load dat file, please place a valid Tibia dat in modules" .. datPath))
+      end
+      if not g_sprites.load(sprPath) then
+        fatal(tr("Unable to load spr file, please place a valid Tibia spr in modules" .. sprPath))
+      end
+    else
+      if not g_thingsType.manualLoad() then
+        fatal(tr("You need the spr and dat files."))
+      end
     end

@@ -40,9 +40,11 @@ public:
     };
 
     bool load(const std::string& file);
+    bool manualLoad();
     void unload();
 
     void parseThingType(std::stringstream& fin, ThingType& thingType);
+    void parseThingType(std::string fileName, Categories category);
 
     ThingType *getEmptyThingType() { return &m_emptyThingType; }
     ThingType *getThingType(uint16 id, Categories category);

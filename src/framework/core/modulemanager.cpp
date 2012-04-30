@@ -112,11 +112,13 @@ ModulePtr ModuleManager::discoverModule(const std::string& moduleFile)
             module = ModulePtr(new Module(name));
             push = true;
         }
+
         module->discover(moduleNode);
 
         // not loaded modules are always in back
         if(push)
             m_modules.push_back(module);
+
     } catch(Exception& e) {
         logError("Unable to discover module from file '", moduleFile, "': ", e.what());
     }

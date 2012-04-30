@@ -22,6 +22,7 @@
 
 #include "otclient.h"
 #include <framework/luascript/luainterface.h>
+#include <framework/core/resourcemanager.h>
 #include <otclient/luascript/luavaluecasts.h>
 #include <otclient/core/game.h>
 #include <otclient/core/tile.h>
@@ -48,11 +49,15 @@ void OTClient::registerLuaFunctions()
 {
     Application::registerLuaFunctions();
 
+    g_lua.registerStaticClass("g_resources");
+    g_lua.bindClassStaticFunction("g_resources", "fileExists", std::bind(&ResourceManager::fileExists, &g_resources, std::placeholders::_1));
+
     g_lua.registerStaticClass("g_thingsType");
     g_lua.bindClassStaticFunction("g_thingsType", "load", std::bind(&ThingsType::load, &g_thingsType, std::placeholders::_1));
     g_lua.bindClassStaticFunction("g_thingsType", "isLoaded", std::bind(&ThingsType::isLoaded, &g_thingsType));
     g_lua.bindClassStaticFunction("g_thingsType", "getSignature", std::bind(&ThingsType::getSignature, &g_thingsType));
     g_lua.bindClassStaticFunction("g_thingsType", "export", std::bind(&ThingsType::exportThings, &g_thingsType));
+    g_lua.bindClassStaticFunction("g_thingsType", "manualLoad", std::bind(&ThingsType::manualLoad, &g_thingsType));
 
     g_lua.registerStaticClass("g_sprites");
     g_lua.bindClassStaticFunction("g_sprites", "load", std::bind(&SpriteManager::load, &g_sprites, std::placeholders::_1));
@@ -249,7 +254,6 @@ void OTClient::registerLuaFunctions()
     g_lua.bindClassMemberFunction<Item>("getCount", &Item::getCount);
     g_lua.bindClassMemberFunction<Item>("getId", &Item::getId);
     g_lua.bindClassMemberFunction<Item>("isStackable", &Item::isStackable);
-
 
     g_lua.registerClass<Effect, Thing>();
     g_lua.registerClass<Missile, Thing>();

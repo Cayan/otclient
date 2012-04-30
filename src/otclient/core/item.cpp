@@ -193,6 +193,7 @@ void Item::setId(uint32 id)
         logTraceError("invalid item id ", id);
         return;
     }
+
     m_id = id;
     m_type = g_thingsType.getThingType(m_id, ThingsType::Item);
 }
