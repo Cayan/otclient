@@ -7,6 +7,9 @@ NPCOfferLabel < Label
 NPCItemBox < UICheckBox
   border-width: 1
   border-color: #000000 
+  color: #aaaaaa
+  text-align: center
+  text-offset: 0 20
   @onCheckChange: NPCTrade.onItemBoxChecked(self)
 
   Item
@@ -14,44 +17,23 @@ NPCItemBox < UICheckBox
     phantom: true
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
-    margin-top: 3
-
-  Label
-    id: nameLabel
-    phantom: true
-    anchors.top: prev.bottom
-    anchors.horizontalCenter: parent.horizontalCenter
-    text-auto-resize: true
-    margin-top: 3
-
-  Label
-    id: weightLabel
-    phantom: true
-    anchors.top: prev.bottom
-    anchors.horizontalCenter: parent.horizontalCenter
-    text-auto-resize: true
-    margin-top: 3
-
-  Label
-    id: priceLabel
-    phantom: true
-    anchors.top: prev.bottom
-    anchors.horizontalCenter: parent.horizontalCenter
-    text-auto-resize: true
-    margin-top: 3
+    margin-top: 5
 
   $checked:    
-    border-color: #FFFFFF 
+    border-color: #ffffff
 
   $hover !checked:
-    border-color: #AAAAAA  
+    border-color: #aaaaaa
+
+  $disabled:
+    image-color: #ffffff88
+    color: #aaaaaa88
 
 MainWindow
   id: npcWindow
   !text: tr('NPC Trade')
   size: 550 515
-
-  @onEscape: NPCTrade.hide()
+  @onEscape: g_game.closeNpcTrade()
 
   TabButton
     id: buyTab
@@ -281,4 +263,4 @@ MainWindow
     width: 64
     anchors.right: parent.right
     anchors.bottom: parent.bottom
-    @onClick: NPCTrade.hide()
+    @onClick: g_game.closeNpcTrade()
