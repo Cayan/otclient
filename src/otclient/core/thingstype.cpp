@@ -24,7 +24,6 @@
 #include "spritemanager.h"
 #include "thing.h"
 #include <framework/core/resourcemanager.h>
-#include <physfs.h>
 #include <framework/thirdparty/apngloader.h>
 
 ThingsType g_thingsType;
