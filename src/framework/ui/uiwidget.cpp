@@ -133,6 +133,8 @@ void UIWidget::addChild(const UIWidgetPtr& child)
         return;
     }
 
+    UIWidgetPtr oldLastChild = getLastChild();
+
     m_children.push_back(child);
     child->setParent(asUIWidget());
 
@@ -145,7 +147,12 @@ void UIWidget::addChild(const UIWidgetPtr& child)
 
     // update new child states
     child->updateStates();
-    updateChildrenIndexStates();
+
+    // update old child index states
+    if(oldLastChild) {
+        oldLastChild->updateState(Fw::MiddleState);
+        oldLastChild->updateState(Fw::LastState);
+    }
 
     g_ui.onWidgetAppear(child);
 }
@@ -451,6 +458,13 @@ void UIWidget::unlockChild(const UIWidgetPtr& child)
     }
 }
 
+void UIWidget::mergeStyle(const OTMLNodePtr& styleNode)
+{
+    applyStyle(styleNode);
+    m_style->merge(styleNode);
+    updateStyle();
+}
+
 void UIWidget::applyStyle(const OTMLNodePtr& styleNode)
 {
     if(m_destroyed)
@@ -714,8 +728,15 @@ void UIWidget::destroyChildren()
     if(layout)
         layout->disableUpdates();
 
-    while(!m_children.empty())
-        m_children[0]->destroy();
+    m_focusedChild = nullptr;
+    m_lockedChildren.clear();
+    while(!m_children.empty()) {
+        UIWidgetPtr child = m_children.front();
+        m_children.pop_front();
+        child->setParent(nullptr);
+        m_layout->removeWidget(child);
+        child->destroy();
+    }
 
     layout->enableUpdates();
 }

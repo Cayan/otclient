@@ -148,7 +148,7 @@ local function refreshTradeItems()
   for key,item in pairs(currentTradeItems) do
     local itemBox = createWidget('NPCItemBox', itemsPanel)
     itemBox.item = item
-    
+
     local name = item.name
     local weight = string.format('%.2f', item.weight) .. ' ' .. WEIGHT_UNIT
     local price = item.price .. ' ' .. CURRENCY
@@ -170,7 +170,7 @@ local function refreshPlayerGoods()
   capacityLabel:setText(string.format('%.2f', playerFreeCapacity) .. ' ' .. WEIGHT_UNIT)
 
   local currentTradeType = getCurrentTradeType()
-  local searchFilter = searchText:getText()
+  local searchFilter = searchText:getText():lower()
   local foundSelectedItem = false
 
   local items = itemsPanel:getChildCount()
@@ -181,7 +181,7 @@ local function refreshPlayerGoods()
     local canTrade = canTradeItem(item)
     itemWidget:setEnabled(canTrade)
 
-    local searchCondition = (searchFilter == '') or (searchFilter ~= '' and string.find(item.name, searchFilter) ~= nil)
+    local searchCondition = (searchFilter == '') or (searchFilter ~= '' and string.find(item.name:lower(), searchFilter) ~= nil)
     local showAllItemsCondition = (currentTradeType == BUY) or (showAllItems:isChecked()) or (currentTradeType == SELL and not showAllItems:isChecked() and canTrade)
     itemWidget:setVisible(searchCondition and showAllItemsCondition)
 
