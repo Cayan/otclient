@@ -59,9 +59,6 @@ bool ThingsType::load(const std::string& file)
 
 bool ThingsType::manualLoad()
 {
-    parseThingType("data/items/104/104.otml", Item);
-    return true;
-
     if(!g_resources.directoryExists("data/items/") || !g_resources.directoryExists("data/creatures/") || !g_resources.directoryExists("data/effects/") || !g_resources.directoryExists("data/missiles/"))
         return false;
 
