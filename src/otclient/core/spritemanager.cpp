@@ -164,6 +164,68 @@ TexturePtr& SpriteManager::getSpriteTexture(int id)
     return sprite;
 }
 
+bool SpriteManager::getSpriteData(int id, uint8* pixels)
+{
+    if(id == 0)
+        return NULL;
+
+    m_spritesFile->seek(((id-1) * 4) + 6);
+    uint32 spriteAddress = m_spritesFile->getU32();
+    if(spriteAddress == 0)
+        return false;
+
+    m_spritesFile->seek(spriteAddress);
+
+    // skip color key
+    m_spritesFile->getU8();
+    m_spritesFile->getU8();
+    m_spritesFile->getU8();
+
+    uint16 pixelDataSize = m_spritesFile->getU16();
+
+    int writePos = 0;
+    int read = 0;
+
+    // decompress pixels
+    while(read < pixelDataSize) {
+        uint16 transparentPixels = m_spritesFile->getU16();
+        uint16 coloredPixels = m_spritesFile->getU16();
+
+        if(writePos + transparentPixels*4 + coloredPixels*3 >= SPRITE_SIZE)
+            return false;
+
+        for(int i = 0; i < transparentPixels; i++) {
+            pixels[writePos + 0] = 0x00;
+            pixels[writePos + 1] = 0x00;
+            pixels[writePos + 2] = 0x00;
+            pixels[writePos + 3] = 0x00;
+            writePos += 4;
+        }
+
+        for(int i = 0; i < coloredPixels; i++) {
+            pixels[writePos + 0] = m_spritesFile->getU8();
+            pixels[writePos + 1] = m_spritesFile->getU8();
+            pixels[writePos + 2] = m_spritesFile->getU8();
+            pixels[writePos + 3] = 0xFF;
+
+            writePos += 4;
+        }
+
+        read += 4 + (3 * coloredPixels);
+    }
+
+    // fill remaining pixels with alpha
+    while(writePos < SPRITE_SIZE) {
+        pixels[writePos + 0] = 0x00;
+        pixels[writePos + 1] = 0x00;
+        pixels[writePos + 2] = 0x00;
+        pixels[writePos + 3] = 0x00;
+        writePos += 4;
+    }
+
+    return true;
+}
+
 bool SpriteManager::exportSprite(std::string fileName, int id, int compression_level/* = 6*/)
 {
     m_spritesFile->seek(((id-1) * 4) + 6);
@@ -234,5 +296,17 @@ void SpriteManager::exportSprites()
     for(volatile int i = 1; i <= m_spritesCount; i++) {
         std::string fileName = Fw::formatString("sprites/%d.png", i);
         exportSprite(fileName, i, PNG_COMPRESSION);
+    }
+}
+
+void SpriteManager::insertSprite(int x, int y, uint8* source, int sourceWidth, int sourceHeight, uint8* target, int targetWidth, int targetHeight, int channels)
+{
+    for(int sX = 0; sX < sourceWidth; ++sX) {
+        for(int sY = 0; sY < sourceHeight; ++sY) {
+            int targetPos = ((x + sX) + (y + sY) * targetWidth) * channels;
+            int sourcePos = (sX + sY * sourceHeight) * channels;
+
+            memcpy(&target[targetPos], &source[sourcePos], channels);
+        }
     }
 }

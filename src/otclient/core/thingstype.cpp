@@ -25,6 +25,7 @@
 #include "thing.h"
 #include <framework/core/resourcemanager.h>
 #include <physfs.h>
+#include <framework/thirdparty/apngloader.h>
 
 ThingsType g_thingsType;
 ThingType ThingsType::m_emptyThingType;
@@ -432,7 +433,7 @@ void ThingsType::parseThingType(std::string fileName, Categories category)
                 m_things[category][id].sprites[spriteCount] = 0;
             else {
                 // TODO: Check the existance of the sprite.
-                uint32 pos = sprite.rfind(".");
+                auto pos = sprite.rfind(".");
                 if(pos != std::string::npos)
                     m_things[category][id].sprites[spriteCount] = atoi(sprite.substr(0, pos).c_str());
             }
@@ -604,7 +605,7 @@ void ThingsType::exportThings()
             dimensions->writeAt("PatternZ", m_things[i][id].dimensions[ThingType::PatternZ]);
             dimensions->writeAt("AnimationPhases", m_things[i][id].dimensions[ThingType::AnimationPhases]);
 
-            OTMLNodePtr sprites = OTMLNode::create("Sprites", true);
+            OTMLNodePtr layers = OTMLNode::create("Layers", true);
             std::string folderName;
 
             if(i == Item) {
@@ -620,22 +621,74 @@ void ThingsType::exportThings()
             else {
                 logError("[ThingsType::exportThings] Unexpected category.");
                 break;
+                return;
             }
 
             g_resources.makeDir(folderName);
-            for(uint32 count = 0; count < m_things[i][id].sprites.size(); count++)
-            {
-                std::string value = "None";
-                std::string fileName = Fw::formatString("%s/%d.png", folderName.c_str(), m_things[i][id].sprites[count]);
-                if(m_things[i][id].sprites[count] > 0) {
-                    value = Fw::formatString("%d.png", m_things[i][id].sprites[count]);
-                    if(!g_sprites.exportSprite(fileName, m_things[i][id].sprites[count], SpriteManager::PNG_COMPRESSION)) {
-                        logError("[ThingsType::exportThings] Failed to load the sprite: ", m_things[i][id].sprites[count], ". From item id: ", id);
-                        break;
+            int frameSize = SpriteManager::SPRITE_SIZE * m_things[i][id].dimensions[ThingType::Width] * m_things[i][id].dimensions[ThingType::Height];
+
+            int resultSize = SpriteManager::SPRITE_SIZE * m_things[i][id].dimensions[ThingType::Width] * m_things[i][id].dimensions[ThingType::PatternX] * m_things[i][id].dimensions[ThingType::PatternZ] *
+                                        m_things[i][id].dimensions[ThingType::Height] * m_things[i][id].dimensions[ThingType::PatternY] * m_things[i][id].dimensions[ThingType::AnimationPhases];
+
+            for(int l = 0; l < m_things[i][id].dimensions[ThingType::Layers]; l++) {
+                uint8* result = new uint8[resultSize];
+                memset(result, 0, resultSize);
+
+                for(int a = 0; a < m_things[i][id].dimensions[ThingType::AnimationPhases]; a++) {
+                    for(int z = 0; z < m_things[i][id].dimensions[ThingType::PatternZ]; z++) {
+                        for(int y = 0; y < m_things[i][id].dimensions[ThingType::PatternY]; y++) {
+                            for(int x = 0; x < m_things[i][id].dimensions[ThingType::PatternX]; x++) {
+                                uint8* frame = new uint8[frameSize];
+                                memset(frame, 0, frameSize);
+
+                                int adjustX;
+                                int adjustY;
+                                for(int h = 0; h < m_things[i][id].dimensions[ThingType::Height]; h++) {
+                                    for(int w = 0; w < m_things[i][id].dimensions[ThingType::Width]; w++) {
+                                        uint8* sprite = new uint8[SpriteManager::SPRITE_SIZE];
+                                        memset(sprite, 0, SpriteManager::SPRITE_SIZE);
+
+                                        if(g_sprites.getSpriteData(m_things[i][id].getSpriteId(w, h, l, x, y, z, a), sprite)) {
+                                            adjustX = SpriteManager::SPRITE_WIDTH * m_things[i][id].dimensions[ThingType::Width] - SpriteManager::SPRITE_WIDTH*(w + 1);
+                                            adjustY = SpriteManager::SPRITE_HEIGHT * m_things[i][id].dimensions[ThingType::Height] - SpriteManager::SPRITE_HEIGHT*(h + 1);
+
+                                            g_sprites.insertSprite(adjustX, adjustY, sprite, SpriteManager::SPRITE_WIDTH, SpriteManager::SPRITE_HEIGHT, frame,
+                                                         SpriteManager::SPRITE_WIDTH * m_things[i][id].dimensions[ThingType::Width],
+                                                         SpriteManager::SPRITE_HEIGHT * m_things[i][id].dimensions[ThingType::Height], SpriteManager::SPRITE_CHANNELS);
+                                        }
+
+                                        delete sprite;
+                                    }
+                                }
+
+                                adjustX = SpriteManager::SPRITE_WIDTH * m_things[i][id].dimensions[ThingType::Width] * (x + m_things[i][id].dimensions[ThingType::PatternX] * z);
+                                adjustY = SpriteManager::SPRITE_HEIGHT * m_things[i][id].dimensions[ThingType::Height] * (y + m_things[i][id].dimensions[ThingType::PatternY] * a);
+
+                                g_sprites.insertSprite(adjustX, adjustY,
+                                            frame,
+                                                SpriteManager::SPRITE_WIDTH * m_things[i][id].dimensions[ThingType::Width],
+                                                SpriteManager::SPRITE_HEIGHT * m_things[i][id].dimensions[ThingType::Height],
+                                            result,
+                                                 SpriteManager::SPRITE_WIDTH * m_things[i][id].dimensions[ThingType::Width] * m_things[i][id].dimensions[ThingType::PatternX] * m_things[i][id].dimensions[ThingType::PatternZ],
+                                                 SpriteManager::SPRITE_HEIGHT * m_things[i][id].dimensions[ThingType::Height] * m_things[i][id].dimensions[ThingType::PatternY] * m_things[i][id].dimensions[ThingType::AnimationPhases],
+                                             SpriteManager::SPRITE_CHANNELS);
+
+                                delete frame;
+                            }
+                        }
                     }
                 }
 
-                sprites->writeIn(value);
+                std::stringstream ss;
+                save_png(ss, SpriteManager::SPRITE_WIDTH * m_things[i][id].dimensions[ThingType::Width] * m_things[i][id].dimensions[ThingType::PatternX] * m_things[i][id].dimensions[ThingType::PatternZ],
+                     SpriteManager::SPRITE_HEIGHT * m_things[i][id].dimensions[ThingType::Height] * m_things[i][id].dimensions[ThingType::PatternY] * m_things[i][id].dimensions[ThingType::AnimationPhases],
+                     SpriteManager::SPRITE_CHANNELS, result, SpriteManager::PNG_COMPRESSION);
+
+                std::string value = Fw::formatString("layer%d.png", l);
+                std::string fileName = Fw::formatString("%s/%s", folderName.c_str(), value.c_str());
+                g_resources.saveFile(fileName, ss);
+                layers->writeIn(value);
+                delete result;
             }
 
             if(properties->size())
@@ -645,7 +698,7 @@ void ThingsType::exportThings()
                 doc->addChild(parameters);
 
             doc->addChild(dimensions);
-            doc->addChild(sprites);
+            doc->addChild(layers);
             std::string fileName = Fw::formatString("%s/%d.otml", folderName.c_str(), virtualId);
             doc->save(fileName);
         }

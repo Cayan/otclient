@@ -14,7 +14,7 @@ Module
         fatal(tr("Unable to load spr file, please place a valid Tibia spr in modules" .. sprPath))
       end
     else
-      if not g_thingsType.manualLoad() then
-        fatal(tr("You need the spr and dat files."))
-      end
+      --if not g_thingsType.manualLoad() then
+        --fatal(tr("You need the spr and dat files."))
+      --end
     end

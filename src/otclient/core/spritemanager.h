@@ -29,6 +29,7 @@
 
 class SpriteManager
 {
+public:
     enum {
         SPRITE_WIDTH = 32,
         SPRITE_HEIGHT = 32,
@@ -36,7 +37,6 @@ class SpriteManager
         SPRITE_SIZE = SPRITE_WIDTH*SPRITE_HEIGHT*SPRITE_CHANNELS
     };
 
-public:
     enum {
         /*
             Compression levels:
@@ -58,6 +58,10 @@ public:
 
     bool exportSprite(std::string fileName, int id, int compression_level = 6);
     void exportSprites();
+
+    void insertSprite(int x, int y, uint8* source, int sourceWidth, int sourceHeight, uint8* target, int targetWidth, int targetHeight, int channels);
+
+    bool getSpriteData(int id, uint8* pixels);
 
     TexturePtr& getSpriteTexture(int id);
     bool isLoaded() { return m_loaded; }
